@@ -13,10 +13,12 @@
 #include <QtCore/QTextCodec>
 #include <QTGUI/QListView>
 #include <time.h>
+#include "createTrainingSet.h"
 //#include "boost/archive/binary_oarchive.hpp"
 //#include "boost/archive/binary_iarchive.hpp"
 
 namespace fs=boost::filesystem;
+namespace fa=faceAnonimization;
 using namespace std;
 std::ofstream logFile;
 
@@ -942,8 +944,8 @@ void faceDetector()
 	std::string cascadeProfilePath="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\cascade\\haarcascade_profileface.xml";
 	*/
 	
-	std::string cascadeFrontalPath="cascade_frontal.xml";
-	std::string cascadeProfilePath="cascade_profilexml";
+	std::string cascadeFrontalPath="C:\\Users\\dev\\Desktop\\faces\\mov\\cascade.xml";
+	std::string cascadeProfilePath="C:\\Users\\dev\\Desktop\\faces\\mov\\cascade.xml";
 	std::string movieFrontalPath="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\2010-12-15-P02-S01.cpy\\Aleksander Spalek_LB_T01.60981847.avi";
 	std::string movieFrontalPath1="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\2010-12-15-P02-S01.cpy\\Aleksander Spalek_LB_T08.60981847.avi";
 	std::string movieFrontalPath2="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\2011-03-04-B0005-S02\\2011-03-04-B0005-S02-T07.60981847.avi";
@@ -1897,10 +1899,15 @@ int main( int argc, const char** argv )
 			break;
 				}
 		case 3: {
+			//fa::YMLConverter ymcC = fa::YMLConverter("C:\\Users\\dev\\Desktop\\test");
+		//	ymcC.YMLtoDAT();
 
+			faceDetector();
+			std::system("pause");
+			break;
 				}
-		default: {
-			std::cout<<"Option not recognized...\n";
+	default: {
+			std::cout<<"Option not recognized..\n";
 			std::system("pause");
 				 }
 
