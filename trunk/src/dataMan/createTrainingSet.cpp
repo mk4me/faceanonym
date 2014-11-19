@@ -1,7 +1,7 @@
 #pragma once
 #include "createTrainingSet.h"
 
-using namespace faceAnonimization;
+using namespace CreateTrainingSets;
 
 YMLConverter::YMLConverter(std::string s_path)
 {

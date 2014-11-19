@@ -7,9 +7,9 @@
 #include "imageList.h"
 #include <fstream> 
 
-
-namespace faceAnonimization
+namespace CreateTrainingSets
 {
+
 	class YMLConverter
 	{
 	private:

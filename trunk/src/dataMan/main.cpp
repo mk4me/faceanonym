@@ -14,11 +14,13 @@
 #include <QTGUI/QListView>
 #include <time.h>
 #include "createTrainingSet.h"
+#include "Anonymization.h"
 //#include "boost/archive/binary_oarchive.hpp"
 //#include "boost/archive/binary_iarchive.hpp"
 
 namespace fs=boost::filesystem;
-namespace fa=faceAnonimization;
+namespace an=Anonimizator;
+namespace cts= CreateTrainingSets;
 using namespace std;
 std::ofstream logFile;
 
@@ -26,6 +28,7 @@ void set_color(int c) {
 	HANDLE uchwyt;
 	uchwyt = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(uchwyt,10);
+	
 }
 
 void coloredText(const std::string& t){
@@ -933,6 +936,121 @@ void changeRes()
 	}
 }
 
+cv::Mat detectFacesd(cv::Mat image, std::string& cascade)
+{
+	double min_face = 20, max_face = 200;
+	cv::CascadeClassifier face_cascade(cascade);
+	std::vector<cv::Rect> faces;
+
+	face_cascade.detectMultiScale(image,faces,1.2,2,0|CV_HAAR_SCALE_IMAGE, cv::Size(min_face,min_face),cv::Size(max_face,max_face));
+
+	for(int i=0; i<faces.size(); i++)
+	{
+		min_face = faces[0].width*0.8;
+		max_face = faces[0].width*1.2;
+		cv::Point center(faces[i].x + faces[i].width*0.5, faces[i].y + faces[i].height*0.5);
+		cv::ellipse(image,center,cv::Size(faces[i].width*0.5,faces[i].height*0.5),0,0,360,cv::Scalar(255,0,255),4,8,0);
+	}
+	return image;
+}
+
+
+
+const int N = 2;
+std::vector<cv::Mat> buf(N);
+int last = 0;
+
+cv::Mat mhi;
+
+// img - input video frame
+// dts - result motion picture
+void update_mhi(const cv::Mat& img, cv::Mat& dst, int diff_treshold, std::vector<cv::Rect> brect)
+{
+	double timestamp = (double)clock()/CLOCKS_PER_SEC; // aktualny czas w sekundach
+	int idx1 = last, idx2;
+	cv::Mat silh, orient, mask, segmask;
+
+	cvtColor(img, buf[last],CV_BGR2GRAY); // do czarno-bioa³ego
+
+	idx2 = (last+1) % N; // index od ostatniej minus (n-1) ramki
+	last = idx2;
+
+	if (buf[idx1].size() != buf[idx2].size())
+		silh = cv::Mat::ones(img.size(),CV_8U)*255;
+	else
+		absdiff(buf[idx1], buf[idx2], silh); // roznica pomiedzy rramkami
+
+	cv::threshold(silh, silh, diff_treshold, 1, CV_THRESH_BINARY); // tresholduj
+
+
+	if(mhi.empty())
+		mhi = cv::Mat::zeros(silh.size(),CV_32F);
+	cv::updateMotionHistory(silh, mhi, timestamp, 1);
+
+
+	mhi.convertTo(mask, CV_8U, 255./1,(1-timestamp)*255./1);
+	dst = cv::Mat::zeros(mask.size(),CV_8UC3);
+	cv::insertChannel(mask,dst,0);
+
+	// liczymy motiongradient orientatnion 
+	cv::calcMotionGradient(mhi, mask, orient, 0.5, 0.05, 3);
+
+	
+	std::vector<cv::Rect> brects = brect;
+	//segmentMotion(mhi,segmask,brects,timestamp,0.5);
+
+
+	cv::Mat image = img;
+	for (int i=-1; i<(int)brects.size(); i++)
+	{
+		cv::Rect roi;
+		cv::Scalar color;
+		double magnitude;
+
+		cv::Mat maski = mask;
+		
+		if (i<0) // dla ca³ego obrazka
+		{
+			roi = cv::Rect(0,0,img.cols, img.rows);
+			color = cv::Scalar::all(255);
+			magnitude = 100;
+		}
+		else
+		{
+			roi = brects[i];
+			color = cv::Scalar(0,0,255);
+			magnitude = 30;
+			maski = mask(roi);
+		}
+
+		// policzyc orientacje
+//		cv::imshow("orient", orient(roi));
+	//	cv::imshow("maski", maski);
+		//cv::imshow("mhi",mhi(roi));
+	//	cv::waitKey(1);
+
+
+		double angel = cv::calcGlobalOrientation(orient(roi), maski, mhi(roi),timestamp,1);
+		angel = 360.0-angel;  // bo mamy 0,0 w lewym górnym
+
+		int count = norm(silh, cv::NORM_L1); 
+
+		if(count < roi.area()*0.05)
+			continue;
+		
+		//rysujemy
+		cv::Point center(roi.x + roi.width/2, roi.y + roi.height/2);
+		cv::circle(dst, center, cvRound(magnitude*1.2), color, 3, CV_AA, 0);
+		cv::line(dst, center, cv::Point(cvRound(center.x+magnitude*cos(angel*CV_PI/180)), cvRound(center.y-magnitude*sin(angel*CV_PI/180))),color, 3, CV_AA, 0);
+
+		cv::circle(image, center, cvRound(magnitude*1.2), color, 1, CV_AA, 0);
+		cv::line(image, center, cv::Point(cvRound(center.x+magnitude*cos(angel*CV_PI/180)), cvRound(center.y-magnitude*sin(angel*CV_PI/180))),color, 1, CV_AA, 0);
+	}
+
+//	imshow("Image", image);
+//	cv::waitKey(1);
+}
+
 void faceDetector()
 {
 	std::system("cls");
@@ -953,22 +1071,163 @@ void faceDetector()
 	std::string movieProfilePath2="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\2010-12-15-P02-S01.cpy\\Aleksander Spalek_LB_T01.53875336.avi";
 	std::string movieBackPath="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\2010-12-15-P02-S01.cpy\\Aleksander Spalek_LB_T01.56339527.avi";
 	
-	CFaceAnonymizer faceAnonymizer(folderPath, cascadeFrontalPath, cascadeProfilePath);
-	//CFaceAnonymizer faceAnonymizer(movieFrontalPath1, cascadeFrontalPath, cascadeProfilePath);
+	//CFaceAnonymizer faceAnonymizer(movieFrontalPath, cascadeFrontalPath, cascadeProfilePath);
 
-	while (1)
+
+	an::CFaceFinder facefind(folderPath, cascadeFrontalPath, cascadeProfilePath);
+	std::vector<an::pairFrameFace> faces = facefind.getAllDetectedFaces();
+
+	an::CContours conturs(100);
+
+	for (int i=0; i< faces.size(); i++)
 	{
-		if (faceAnonymizer.isOpended())
+		cv::Mat src = faces[i].first;
+		for (int j = 0; j< faces[i].second.size(); j++)
 		{
-			cv::Mat frame=faceAnonymizer.getAnonymizedFrame();
-			if (frame.cols>10)
-			{
-				cv::imshow("Anonymizing", frame);
-				cv::waitKey(40);
-			}
+			cv::rectangle(src,faces[i].second[j],cv::Scalar(0,0,255),3);
 		}
-		
+		cv::imshow("frame",src);
+		cv::waitKey(1);
+		//cv::Rect re = faces[i].second[0];
+		//cv::Mat src1 = src(re);
+		//cv::imshow("cut", src1);
+		//conturs.findContoursCanny(src1,true);
+		//std::vector<an::vecPoint> point;
+		//conturs.getContours(point);
+		cv::waitKey(1);
 	}
+	return;
+
+	//COpticalFlowPLK ofPLK;
+	//ofPLK.init(255);
+	//CvCapture* capture = cvCreateFileCapture(folderPath.c_str());
+	//IplImage* image,imaA;
+
+	//cv::Rect face = m_faces[0][0];
+	//int x = face.x;
+	//int y = face.y;
+	//CvPoint2D32f* pts_cur(x,y);
+	//
+	//while(1)
+	//{
+
+	//	if (cvGrabFrame(capture)==0)
+	//		break;
+	//	image = cvRetrieveFrame(capture);
+	//	IplImage* gray = cvCreateImage(cvGetSize(image),IPL_DEPTH_8U,1);
+	//	cvCvtColor(image,gray, CV_RGB2GRAY);
+	//	int i = ofPLK.trackPosition(gray);
+	//	CvPoint2D32f* ctrk;
+	//	ofPLK.getCurrentTrackedPosition(&ctrk);
+	//	CvPoint2D32f* ptrk;
+	//	ofPLK.getPreviousTrackedPosition(&ptrk);
+
+	//	cv::Mat imgMat(image);
+	//	int c;
+	//	ofPLK.getCount(&c);
+	//	
+
+	//	for (int i=0; i<c;i++)
+	//	{
+	//		//cv::circle(imgMat,cvPointFrom32f(ctrk[i]),5, cv::Scalar(0,0,255),2);
+	//		cv::circle(imgMat,cvPointFrom32f(ptrk[i]),2, cv::Scalar(0,255,0),1);
+	//		cv::line(imgMat,cvPointFrom32f(ctrk[i]),cvPointFrom32f(ptrk[i]),cv::Scalar(0,0,255),2);
+	//	}
+
+	//	cv::imshow("mat",imgMat);
+	//	cv::waitKey(1);
+	//}
+
+	//cv::Mat frame;
+	//cv::Mat back;
+	//cv::Mat fore;
+	//cv::VideoCapture cap(folderPath);
+	//cv::BackgroundSubtractorMOG2 bg;
+	//bg.nmixtures = 3;
+	//bg.bShadowDetection = false;
+
+	//std::vector<std::vector<cv::Point>> conturs;
+
+	//cv::namedWindow("Frame");
+	//
+	//bool ifend = false;
+	//while (!ifend)
+	//{
+	//	cap >> frame;
+	//	if (cap.read(frame))
+	//	{
+	//		bg.operator()(frame, fore);
+	//		bg.getBackgroundImage(back);
+	//		cv::erode(fore,fore,cv::Mat());
+	//		cv::dilate(fore,fore,cv::Mat());
+	//		cv::findContours(fore,conturs,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
+	//		cv::drawContours(frame,conturs,-1,cv::Scalar(0,0,255),2);
+
+
+	//		std::vector<cv::Rect> boundRect( conturs.size() );
+	//		for (int i=0; i<conturs.size(); i++)
+	//		{
+	//			boundRect[i]=boundingRect(cv::Mat(conturs[i]));
+	//		}
+
+	//		for (int i=0; i<conturs.size(); i++)
+	//		{
+	//			cv::rectangle(frame,boundRect[i].tl(), boundRect[i].br(), cv::Scalar(0,255,0),2);
+	//		}
+
+	//		cv::Size size(frame.size().width/2,frame.size().height/2);
+	//		cv::resize(frame,frame,size);
+	//		cv::imshow("Frame", frame);
+	//		//cv::imshow("Background", back);
+	//		cv::waitKey(40);
+	//	}
+	//	else
+	//		ifend = true;
+	//}
+	//cv::imshow("Background", back);
+	//cv::waitKey(1);
+	//cv::imwrite("C:\\Users\\dev\\Desktop\\faces\\mov\\testy.jpg",back);
+	//cap.release();
+
+	////ramka po ramce wolniej
+	//cv::VideoCapture cap(folderPath);
+	//cv::namedWindow("tets",1);
+
+	//cv::CascadeClassifier m_clasFrontal(cascadeFrontalPath);
+	//std::vector <std::vector<cv::Rect>> objects;
+
+	//while (1)
+	//{
+	//	std::vector <cv::Rect> area;
+	//	cv::Mat frame;
+	//	cap >> frame;
+	//	m_clasFrontal.detectMultiScale(frame, area);
+	//	objects.push_back(area);
+	//	frame=detectFacesd(frame,cascadeProfilePath);
+	//	imshow("tets",frame);
+	//	cv::waitKey(10);
+	//}
+
+	//cv::waitKey(0);
+	
+
+
+
+	
+	//CFaceAnonymizer faceAnonymizer(folderPath, cascadeFrontalPath, cascadeProfilePath);
+	//while (1)
+	//{
+	//	if (faceAnonymizer.isOpended())
+	//	{
+	//		cv::Mat frame=faceAnonymizer.getAnonymizedFrame();
+	//		if (frame.cols>10)
+	//		{
+	//			cv::imshow("Anonymizing", frame);
+	//			cv::waitKey(40);
+	//		}
+	//	}
+
+	//}
 	
 
 	/*cv::CascadeClassifier classifier(cascadeFrontalPath);
@@ -991,6 +1250,40 @@ void faceDetector()
 	cv::waitKey(40);
 	}
 	}*/
+
+
+
+
+
+	//optical flow testy
+	
+
+
+	/*cv::Mat motion;
+	cv::VideoCapture cap;
+	cap.open(folderPath);
+
+	if(!cap.isOpened())
+		return;
+
+	CFaceFinder facefind(folderPath, cascadeFrontalPath, cascadeProfilePath);
+	std::vector<std::vector<cv::Rect>> m_faces = facefind.getAllDetectedFaces();
+	int i = 0;
+	while (1)
+	{
+		cv::Mat frame;
+		cap >> frame;
+		
+		if(frame.empty())
+			break;
+
+		update_mhi(frame, motion, 30, m_faces[1]);
+		imshow("Calc global orient", motion);
+		cv::waitKey(400);
+		i++;
+	}*/
+
+	
 }
 
 
@@ -1903,7 +2196,6 @@ int main( int argc, const char** argv )
 		//	ymcC.YMLtoDAT();
 
 			faceDetector();
-			std::system("pause");
 			break;
 				}
 	default: {

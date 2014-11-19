@@ -67,6 +67,7 @@ void CFaceDetector::run()
 					localObjects[j]=localObjects[j]+(subImRect.tl());
 
 				objects.assign(localObjects.begin(), localObjects.end());
+
 			}
 		}
 		else
@@ -81,6 +82,7 @@ void CFaceDetector::run()
 			//CS
 			m_mutex.lock();
 			m_detectedArea=objects;
+			m_endFrame = true;
 			m_mutex.unlock();
 			//eof CS
 		}
@@ -113,11 +115,24 @@ std::vector<cv::Rect> CFaceDetector::getArea() //not const because of mutex usag
 {
 	//CS used because of possibility storing detecting faces in method run().
 
-	//CS
-	m_mutex.lock();
-	std::vector<cv::Rect> rv (m_detectedArea); //vector that should be returned.
-	m_mutex.unlock();
-	//eof CS
+	bool ifend = false;
+	std::vector<cv::Rect> rv;
+	
+	while(!ifend)
+	{
+		m_mutex.lock();
+		ifend = m_endFrame;
+
+		if(ifend)
+		{
+			//CS
+			rv = m_detectedArea; //vector that should be returned.
+			//eof CS
+		}
+		m_mutex.unlock();
+
+		cv::waitKey(40);
+	}
 
 	return rv;
 }
@@ -178,9 +193,8 @@ cv::Mat CFaceAnonymizer::getAnonymizedFrame()
 			m_maskShield->drawShield(frame, areaVec[i], 1.5);
 		//std::cout<<"F";
 		//cv::waitKey(20);
-			//cv::rectangle(frame, areaVec[i], cv::Scalar(255,0,0), 3);
+		//cv::rectangle(frame, areaVec[i], cv::Scalar(255,0,0), 3);
 	}
-
 	return frame;
 }
 

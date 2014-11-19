@@ -16,6 +16,7 @@ link_directories(${QT_LIB_PATH})
 # target
 set(SOURCES
 	main.cpp
+	Anonymization.cpp
 	folderOrganize.cpp
 	faceAnonymizer.cpp
 	trainingData.cpp
@@ -27,6 +28,7 @@ set(SOURCES
  
 set(HEADERS
 	main.h
+	Anonymization.h
 	folderOrganize.h
 	faceAnonymizer.h
 	trainingData.h

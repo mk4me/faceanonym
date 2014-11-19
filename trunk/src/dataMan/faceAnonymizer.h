@@ -44,7 +44,8 @@ public:
 	*/
 	CFaceDetector::CFaceDetector( const std::string& frontalClassifier, const std::string& profileClassifier ):m_clasFrontal(frontalClassifier),
 		m_clasProfile(profileClassifier), 
-		m_count(0)
+		m_count(0),
+		m_endFrame(false)
 	{}
 
 	/*	\brief Method derived from OpenThreads::Thread class executed in separate thread.
@@ -74,6 +75,7 @@ private:
 	cv::CascadeClassifier m_clasProfile;	//!< classifier for profile face detection
 	std::vector<cv::Rect> m_detectedArea;	//!< last area (understood as set of rectangles)  where face was detected.
 	int m_count; //debug
+	bool m_endFrame;
 };
 
 
@@ -125,7 +127,7 @@ public:
 
 private:
 
-	CFaceAnonymizer(){};			//!< Face anonymizer runs CFaceDetector thread, so it have to create new instance of CFaceDetector. The default constructor wouldn't know how to create it without classifiers!
+	CFaceAnonymizer(){};		//!< Face anonymizer runs CFaceDetector thread, so it have to create new instance of CFaceDetector. The default constructor wouldn't know how to create it without classifiers!
 
 	IFaceShield* m_maskShield;	//!< shield that will be drawn on image;
 
