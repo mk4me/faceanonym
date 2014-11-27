@@ -30,59 +30,74 @@ void CFaceDetector::run()
 		count++;
 		//critical section (CS) used for creating image because of possibility of try to store new image in _m_image by other thread by method storeNewImage.
 		//I didn't use one long CS because of comparatively long time of detectMultiScale working.
+		bool isGot;
+		bool isStor;		
 		cv::Mat image;
 		std::vector<cv::Rect> areas;
 		//CS:
 		m_mutex.lock();
 		image=m_image;
 		areas=m_detectedArea;
+		isGot = m_got;
+		isStor = m_stored;
 		m_mutex.unlock();
 		//eof CS
 
 		//cv::Mat imageToDraw=image;
 		
 		std::vector <cv::Rect> objects;
-		if (areas.size()>0)
+
+		if (isStor == true & isGot == false)
 		{
-			for (int i=0; i<areas.size(); i++)
-			{
-				std::vector<cv::Rect> localObjects;
-				const int scaleFactor=5;
-				cv::Size zoomScale(areas[i].width*scaleFactor-areas[i].width, areas[i].height*scaleFactor-areas[i].height);
-				cv::Point2i tl=cv::Point(zoomScale.width/2, zoomScale.height/2);
-				cv::Rect subImRect=areas[i]+zoomScale-tl;
-				//cv::rectangle(imageToDraw, subImRect, cv::Scalar(255,255,0), 3);
+			//if (areas.size()>0)
+			//{
+			//	for (int i=0; i<areas.size(); i++)
+			//	{
+			//		std::vector<cv::Rect> localObjects;
+			//		const int scaleFactor=5;
+			//		cv::Size zoomScale(areas[i].width*scaleFactor-areas[i].width, areas[i].height*scaleFactor-areas[i].height);
+			//		cv::Point2i tl=cv::Point(zoomScale.width/2, zoomScale.height/2);
+			//		cv::Rect subImRect=areas[i]+zoomScale-tl;
+			//		//cv::rectangle(imageToDraw, subImRect, cv::Scalar(255,255,0), 3);
 
-				//std::cout<<subImRect.x<<"," <<subImRect.y<<";\n";
-				if (subImRect.x<0) subImRect.x=0;
-				if (subImRect.y<0) subImRect.y=0;
-				if (subImRect.br().x>image.cols) subImRect.width=image.cols-1-subImRect.x;
-				if (subImRect.br().y>image.rows) subImRect.height=image.rows-1-subImRect.y;
+			//		//std::cout<<subImRect.x<<"," <<subImRect.y<<";\n";
+			//		if (subImRect.x<0) subImRect.x=0;
+			//		if (subImRect.y<0) subImRect.y=0;
+			//		if (subImRect.br().x>image.cols) subImRect.width=image.cols-1-subImRect.x;
+			//		if (subImRect.br().y>image.rows) subImRect.height=image.rows-1-subImRect.y;
 
-				cv::Mat areaImage=image(subImRect);
-				if (areaImage.cols>10)
-					m_clasFrontal.detectMultiScale(areaImage, localObjects);  //face detection
-				
-				for (int j=0; j<localObjects.size(); j++)
-					localObjects[j]=localObjects[j]+(subImRect.tl());
+			//		cv::Mat areaImage=image(subImRect);
+			//		if (areaImage.cols>10)
+			//			m_clasFrontal.detectMultiScale(areaImage, localObjects);  //face detection
 
-				objects.assign(localObjects.begin(), localObjects.end());
+			//		if (localObjects.size()==0)
+			//		{
+			//			m_clasFrontal.detectMultiScale(image,objects);
+			//		}
+			//		
+			//		for (int j=0; j<localObjects.size(); j++)
+			//			localObjects[j]=localObjects[j]+(subImRect.tl());
 
-			}
+			//		objects.assign(localObjects.begin(), localObjects.end());
+
+			//	}
+			//}
+			//else
+			//{
+			//	if (image.cols>10)
+					m_clasFrontal.detectMultiScale(image, objects);  //face detection
+			//}
 		}
-		else
-		{
-			if (image.cols>10)
-				m_clasFrontal.detectMultiScale(image, objects);  //face detection
-		}
-		
+			
+
 		if (objects.size()>0)
 		{
 			//detected faces stored in m_detectedArea in critical section due to possibility of read this variable by other thread.
 			//CS
 			m_mutex.lock();
 			m_detectedArea=objects;
-			m_endFrame = true;
+			m_got = true;
+			m_stored = false;
 			m_mutex.unlock();
 			//eof CS
 		}
@@ -92,47 +107,73 @@ void CFaceDetector::run()
 
 }
 
+
 void CFaceDetector::storeNewImage( const cv::Mat& image )
 {
-	//critical section used because of possibility of m_image retrieving in method run.
-	m_count++;
-	//CS
+
+	bool canStor = true;
+
+	while (canStor)
+	{
+		m_mutex.lock();
+		canStor = m_stored;
+		if (!canStor)
+		{
+			m_image=cv::Mat(image);
+		}
+		m_mutex.unlock();
+
+		cv::waitKey(10);
+	}
+
 	m_mutex.lock();
-	m_image=cv::Mat(image);
-	
-	//for debug:
-	/*std::stringstream s;
-	s<<"F:\\dev\\k.wereszczynski\\cvl\\tmp\\c"<<m_count<<".jpg";
-	cv::imwrite(s.str(), m_image);*/
-	//end for debug
+	m_stored = true;
 	m_mutex.unlock();
-	//std::cout<<"N";
-	//cv::waitKey(20);
-	//eof CS
+
+	////critical section used because of possibility of m_image retrieving in method run.
+	//m_count++;
+	////CS
+	//m_mutex.lock();
+	//m_image=cv::Mat(image);
+	//
+	////for debug:
+	///*std::stringstream s;
+	//s<<"F:\\dev\\k.wereszczynski\\cvl\\tmp\\c"<<m_count<<".jpg";
+	//cv::imwrite(s.str(), m_image);*/
+	////end for debug
+	//m_mutex.unlock();
+	////std::cout<<"N";
+	////cv::waitKey(20);
+	////eof CS
 }
 
 std::vector<cv::Rect> CFaceDetector::getArea() //not const because of mutex usage.
 {
 	//CS used because of possibility storing detecting faces in method run().
 
-	bool ifend = false;
+	bool canGot = false;
 	std::vector<cv::Rect> rv;
 	
-	while(!ifend)
+
+	while(!canGot)
 	{
 		m_mutex.lock();
-		ifend = m_endFrame;
-
-		if(ifend)
+		canGot = m_got;
+		
+		if (canGot)
 		{
-			//CS
-			rv = m_detectedArea; //vector that should be returned.
-			//eof CS
+			rv = m_detectedArea;
 		}
 		m_mutex.unlock();
 
-		cv::waitKey(40);
+		cv::waitKey(10);
+
 	}
+
+	m_mutex.lock();
+	m_got = false;
+	m_mutex.unlock();
+
 
 	return rv;
 }

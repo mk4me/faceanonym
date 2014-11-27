@@ -26,13 +26,14 @@ std::vector<pairFrameFace> CFaceFinder::getAllDetectedFaces()
 		{
 			m_detector->storeNewImage(frame);
 			vecRect area = m_detector->getArea();
+			faces.push_back(std::make_pair(frame.clone(),area));
+			
 			for (int i = 0; i< area.size(); i++)
 			{
 				cv::rectangle(frame,area[i],cv::Scalar(0,0,255),3);
 			}
-			//cv::imshow("frame",frame);
-			//cv::waitKey(1);
-			faces.push_back(std::make_pair(frame.clone(),area));
+			cv::imshow("draw",frame);
+			cv::waitKey(10);
 		}
 		else
 			endVideo = true;
@@ -71,30 +72,46 @@ void CContours::findContoursCanny(cv::Mat& src, bool show)
 	}
 }
 
-void CContours::getContours(std::vector<vecPoint> &cont)
+void CContours::getContours(std::vector<cv::Point2f> &cont)
 {
-	cont = m_contours;
+	std::vector<cv::Point2f> tmp;
+
+	for (int i=0; i<m_contours.size(); i++)
+	{
+		for (int j=0; j<m_contours[i].size(); j++)
+		{
+			tmp.push_back(cv::Point2f(m_contours[i][j]));
+		}
+	}
+
+	cont = tmp;
+}
+
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+void COpticalFlowPLK::init(std::vector<cv::Point2f> conturs)
+{
+	int maxCount = conturs.size();
+	prevPts = conturs;
+	status = (char *)cvAlloc(maxCount);
+	prevImg = 0;
+}
+
+
+void COpticalFlowPLK::trackPosition(cv::Mat img)
+{
+	if (prevImg.empty())
+	{
+		prevImg = cv::Mat(img.rows, img.cols, CV_8UC3);
+		cv::imshow("test",prevImg);
+		cv::waitKey(1);
+	}
+
 }
 
 
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-//void COpticalFlowPLK::init(int maxCount)
-//{
-//	m_maxCount = maxCount;
-//	flags = 0;
-//	quality = 0.01;
-//	min_distance = 10;
-//	avg_blocksize = 3;
-//	count = 0;
-//	pcount = 0;
-//	pts_cur = (CvPoint2D32f*)cvAlloc(m_maxCount* sizeof(CvPoint2D32f));
-//	pts_prv = (CvPoint2D32f*)cvAlloc(m_maxCount* sizeof(CvPoint2D32f));
-//	pts_cur_trk = (CvPoint2D32f*)cvAlloc(m_maxCount* sizeof(CvPoint2D32f));
-//	pts_prv_trk = (CvPoint2D32f*)cvAlloc(m_maxCount* sizeof(CvPoint2D32f));
-//	stat = (char *)cvAlloc(m_maxCount);
-//	eig = 0;
-//}
+
 //
 //int COpticalFlowPLK::trackPosition(IplImage* gry)
 //{
@@ -150,6 +167,22 @@ void CContours::getContours(std::vector<vecPoint> &cont)
 //
 //	return count;
 //}
+//void COpticalFlowPLK::init(int maxCount)
+//{
+//	m_maxCount = maxCount;
+//	flags = 0;
+//	quality = 0.01;
+//	min_distance = 10;
+//	avg_blocksize = 3;
+//	count = 0;
+//	pcount = 0;
+//	pts_cur = (CvPoint2D32f*)cvAlloc(m_maxCount* sizeof(CvPoint2D32f));
+//	pts_prv = (CvPoint2D32f*)cvAlloc(m_maxCount* sizeof(CvPoint2D32f));
+//	pts_cur_trk = (CvPoint2D32f*)cvAlloc(m_maxCount* sizeof(CvPoint2D32f));
+//	pts_prv_trk = (CvPoint2D32f*)cvAlloc(m_maxCount* sizeof(CvPoint2D32f));
+//	stat = (char *)cvAlloc(m_maxCount);
+//	eig = 0;
+//}/*
 //
 //void COpticalFlowPLK::getCurrentTrackedPosition(CvPoint2D32f **ctrk)
 //{

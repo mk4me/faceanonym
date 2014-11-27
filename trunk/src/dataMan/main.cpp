@@ -1062,8 +1062,8 @@ void faceDetector()
 	std::string cascadeProfilePath="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\cascade\\haarcascade_profileface.xml";
 	*/
 	
-	std::string cascadeFrontalPath="C:\\Users\\dev\\Desktop\\faces\\mov\\cascade.xml";
-	std::string cascadeProfilePath="C:\\Users\\dev\\Desktop\\faces\\mov\\cascade.xml";
+	std::string cascadeFrontalPath="C:\\Users\\dev\\Desktop\\faces\\mov\\cascade2000N.xml";
+	std::string cascadeProfilePath="C:\\Users\\dev\\Desktop\\faces\\mov\\cascade2000N.xml";
 	std::string movieFrontalPath="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\2010-12-15-P02-S01.cpy\\Aleksander Spalek_LB_T01.60981847.avi";
 	std::string movieFrontalPath1="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\2010-12-15-P02-S01.cpy\\Aleksander Spalek_LB_T08.60981847.avi";
 	std::string movieFrontalPath2="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\2011-03-04-B0005-S02\\2011-03-04-B0005-S02-T07.60981847.avi";
@@ -1081,21 +1081,25 @@ void faceDetector()
 
 	for (int i=0; i< faces.size(); i++)
 	{
-		cv::Mat src = faces[i].first;
+		cv::Mat src = faces[i].first.clone();
 		for (int j = 0; j< faces[i].second.size(); j++)
 		{
-			cv::rectangle(src,faces[i].second[j],cv::Scalar(0,0,255),3);
+			cv::rectangle(src,faces[i].second[j],cv::Scalar(0,255,0),3);
 		}
-		cv::imshow("frame",src);
+		cv::imshow("src",src);
 		cv::waitKey(1);
-		//cv::Rect re = faces[i].second[0];
-		//cv::Mat src1 = src(re);
-		//cv::imshow("cut", src1);
-		//conturs.findContoursCanny(src1,true);
-		//std::vector<an::vecPoint> point;
-		//conturs.getContours(point);
-		cv::waitKey(1);
+	//	cv::Rect re = faces[i].second[0];
+	//	cv::Mat src1 = faces[i].first(re);
+	//	cv::imshow("cut", src1);
+	///*	conturs.findContoursCanny(src1,true);
+	//	std::vector<cv::Point2f> point;
+	//	conturs.getContours(point);*/
+	//	cv::waitKey(10);
+	/*	an::COpticalFlowPLK ofPLK;
+		ofPLK.init(point);
+		ofPLK.trackPosition(src);*/
 	}
+
 	return;
 
 	//COpticalFlowPLK ofPLK;

@@ -14,7 +14,6 @@ namespace Anonimizator
 
 	 typedef std::vector<cv::Rect> vecRect;
 	 typedef std::pair<cv::Mat,vecRect> pairFrameFace;
-	 typedef std::vector<cv::Point> vecPoint;
 
 	/*	\brief		
 		\author		Magdalena Pawlyta
@@ -69,11 +68,11 @@ namespace Anonimizator
 			/*	\brief		return contours
 				\return		vector of contours found	
 			*/
-			void getContours(std::vector<vecPoint> &);
+			void getContours(std::vector<cv::Point2f> &);
 
 		private:
 			int m_threshold;						//!< threshold for the hysteresis procedure (use in findContours)
-			std::vector<vecPoint> m_contours;		//!< vector of found contours
+			std::vector<std::vector<cv::Point>> m_contours;		//!< vector of found contours
 	};
 
 
@@ -86,40 +85,55 @@ namespace Anonimizator
 	*/
 	class COpticalFlowPLK
 	{
-	public:
-		COpticalFlowPLK() {};
-		~COpticalFlowPLK() {};
 
-		void init(int maxCount);
-		int trackPosition(IplImage* gry);
-		void getCurrentTrackedPosition(CvPoint2D32f **);
-		void getPreviousTrackedPosition(CvPoint2D32f **);
-		void getCount(int *);
+		public:
+			COpticalFlowPLK() {};
+			~COpticalFlowPLK() {};
+			void init(std::vector<cv::Point2f> conturs);
+			void trackPosition(cv::Mat img);
 
-		//int m_maxCount;
-		//float m_minEigen;
-
-		//int count;
-		//CvPoint2D32f* pts_cur;
-		//CvPoint2D32f* pts_prv;
-		//CvPoint2D32f* pts_cur_trk;
-		//CvPoint2D32f* pts_prv_trk;
-
-	private:
-	/*	IplImage *eig, *tmp, *stmp, *pgry, *pry, *ppyr;
-		IplImage *t;
-		int win_size;
-
-		CvPoint2D32f *spts, *tpts;
-		char *stat;
-
-		int flags;
-		double quality;
-		double min_distance;
-		int avg_blocksize;
-		int pcount;
-		int i,j,k;*/
+		private:
+			cv::Mat prevImg;
+			std::vector<cv::Point2f> prevPts, nextPts;
+			char *status;
 	};
+
+	//class  COpticalFlowPLK
+	//{
+	//public:
+	//	COpticalFlowPLK() {};
+	//	~COpticalFlowPLK() {};
+
+	//	void init(int maxCount);
+	//	int trackPosition(IplImage* gry);
+	//	void getCurrentTrackedPosition(CvPoint2D32f **);
+	//	void getPreviousTrackedPosition(CvPoint2D32f **);
+	//	void getCount(int *);
+
+	//	//int m_maxCount;
+	//	//float m_minEigen;
+
+	//	//int count;
+	//	//CvPoint2D32f* pts_cur;
+	//	//CvPoint2D32f* pts_prv;
+	//	//CvPoint2D32f* pts_cur_trk;
+	//	//CvPoint2D32f* pts_prv_trk;
+
+	//private:
+	///*	IplImage *eig, *tmp, *stmp, *pgry, *pry, *ppyr;
+	//	IplImage *t;
+	//	int win_size;
+
+	//	CvPoint2D32f *spts, *tpts;
+	//	char *stat;
+
+	//	int flags;
+	//	double quality;
+	//	double min_distance;
+	//	int avg_blocksize;
+	//	int pcount;
+	//	int i,j,k;*/
+	//};
 
 }
 

@@ -45,7 +45,8 @@ public:
 	CFaceDetector::CFaceDetector( const std::string& frontalClassifier, const std::string& profileClassifier ):m_clasFrontal(frontalClassifier),
 		m_clasProfile(profileClassifier), 
 		m_count(0),
-		m_endFrame(false)
+		m_stored(false),
+		m_got(false)
 	{}
 
 	/*	\brief Method derived from OpenThreads::Thread class executed in separate thread.
@@ -75,7 +76,8 @@ private:
 	cv::CascadeClassifier m_clasProfile;	//!< classifier for profile face detection
 	std::vector<cv::Rect> m_detectedArea;	//!< last area (understood as set of rectangles)  where face was detected.
 	int m_count; //debug
-	bool m_endFrame;
+	bool m_stored;
+	bool m_got;
 };
 
 
