@@ -42,7 +42,9 @@ namespace Anonimizator
 
 	private:
 		cv::VideoCapture m_capture;					//!< capture, where movie is stored.
-		CFaceDetector* m_detector;					//!< its thread is started in constructor, afterwards it is used for retrieving face rectangle from detector.
+		cv::CascadeClassifier m_clasFrontal;	//!< classifier for frontal face detection
+		cv::CascadeClassifier m_clasProfile;	//!< classifier for profile face detection
+		//CFaceDetector* m_detector;					//!< its thread is started in constructor, afterwards it is used for retrieving face rectangle from detector.
 	};
 
 	/*	\brief		

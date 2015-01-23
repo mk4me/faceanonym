@@ -4,40 +4,75 @@
 using namespace Anonimizator;
 
 
-CFaceFinder::CFaceFinder(const std::string& videoName, const std::string& frontalClassifier, const std::string& profileClassifier): m_capture(videoName)
+CFaceFinder::CFaceFinder(const std::string& videoName, const std::string& frontalClassifier, const std::string& profileClassifier): m_capture(videoName),m_clasFrontal(frontalClassifier),m_clasProfile(profileClassifier)
 {
-	m_detector= new CFaceDetector(frontalClassifier, profileClassifier);
-	m_detector->start();
+	//m_detector= new CFaceDetector(frontalClassifier, profileClassifier);
+	//m_detector->start();
+
 }
 
 CFaceFinder::~CFaceFinder()
 {
-	delete m_detector;
+	//delete m_detector;
 }
 
 std::vector<pairFrameFace> CFaceFinder::getAllDetectedFaces()
 {
 	std::vector<pairFrameFace> faces;
 	bool endVideo = false;
+	int i =0, j=0,z=0,c=0;
+	int neightbor = 0;
+	int faceCount = 3;
+	double minFaceSize = 20, maxFaceSize = 200;
 	while(!endVideo)
 	{
 		cv::Mat frame;
+		std::cout<<i<<"\n";
+		i++;
 		if (m_capture.read(frame))
 		{
-			m_detector->storeNewImage(frame);
-			vecRect area = m_detector->getArea();
-			faces.push_back(std::make_pair(frame.clone(),area));
+			//m_detector->storeNewImage(frame);
+			//vecRect area = m_detector->getArea();
+			//faces.push_back(std::make_pair(frame.clone(),area));
+			vecRect area;
+			m_clasFrontal.detectMultiScale(frame, area, 1.2, neightbor,0, cv::Size(minFaceSize,minFaceSize), cv::Size(maxFaceSize, maxFaceSize));
+
 			
+			if (area.size() == 0)
+				j++;
+			if(area.size()==2)
+				z++;
+			if(area.size() >2)
+				c++;
+
+			double max = 0, min = 0;
+
+			if(area.size()>=faceCount)
+				min = area[0].width;
+
 			for (int i = 0; i< area.size(); i++)
 			{
+				if(max<area[i].width)
+					max = area[i].width;
+				if(min > area[i].width)
+					min = area[i].width;
+					
+				/*if (minFaceSize > area[i].width*0.8)
+				minFaceSize = area[i].width * 0.8;
+				if(maxFaceSize < area[i].width*1.2)
+				maxFaceSize = area[i].width *1.2;*/
 				cv::rectangle(frame,area[i],cv::Scalar(0,0,255),3);
 			}
+			maxFaceSize = max *1.2;
+			minFaceSize = min * 0.8;
 			cv::imshow("draw",frame);
 			cv::waitKey(10);
 		}
 		else
 			endVideo = true;
 	}
+	std::cout<<"bez twarzy - "<<j<<"\n"<<"dwie - "<<z<<"\n wiecej niz 2 -"<<c<<"\n";
+	cv::waitKey(100000);
 	return faces;
 }
 

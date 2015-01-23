@@ -46,47 +46,48 @@ void CFaceDetector::run()
 		//cv::Mat imageToDraw=image;
 		
 		std::vector <cv::Rect> objects;
+		int neightbor = 12;
 
 		if (isStor == true & isGot == false)
 		{
-			//if (areas.size()>0)
-			//{
-			//	for (int i=0; i<areas.size(); i++)
-			//	{
-			//		std::vector<cv::Rect> localObjects;
-			//		const int scaleFactor=5;
-			//		cv::Size zoomScale(areas[i].width*scaleFactor-areas[i].width, areas[i].height*scaleFactor-areas[i].height);
-			//		cv::Point2i tl=cv::Point(zoomScale.width/2, zoomScale.height/2);
-			//		cv::Rect subImRect=areas[i]+zoomScale-tl;
-			//		//cv::rectangle(imageToDraw, subImRect, cv::Scalar(255,255,0), 3);
+			if (areas.size()>0)
+			{
+				for (int i=0; i<areas.size(); i++)
+				{
+					std::vector<cv::Rect> localObjects;
+					const int scaleFactor=5;
+					cv::Size zoomScale(areas[i].width*scaleFactor-areas[i].width, areas[i].height*scaleFactor-areas[i].height);
+					cv::Point2i tl=cv::Point(zoomScale.width/2, zoomScale.height/2);
+					cv::Rect subImRect=areas[i]+zoomScale-tl;
+					//cv::rectangle(imageToDraw, subImRect, cv::Scalar(255,255,0), 3);
 
-			//		//std::cout<<subImRect.x<<"," <<subImRect.y<<";\n";
-			//		if (subImRect.x<0) subImRect.x=0;
-			//		if (subImRect.y<0) subImRect.y=0;
-			//		if (subImRect.br().x>image.cols) subImRect.width=image.cols-1-subImRect.x;
-			//		if (subImRect.br().y>image.rows) subImRect.height=image.rows-1-subImRect.y;
+					//std::cout<<subImRect.x<<"," <<subImRect.y<<";\n";
+					if (subImRect.x<0) subImRect.x=0;
+					if (subImRect.y<0) subImRect.y=0;
+					if (subImRect.br().x>image.cols) subImRect.width=image.cols-1-subImRect.x;
+					if (subImRect.br().y>image.rows) subImRect.height=image.rows-1-subImRect.y;
 
-			//		cv::Mat areaImage=image(subImRect);
-			//		if (areaImage.cols>10)
-			//			m_clasFrontal.detectMultiScale(areaImage, localObjects);  //face detection
+					cv::Mat areaImage=image(subImRect);
+					if (areaImage.cols>10)
+						m_clasFrontal.detectMultiScale(areaImage, localObjects,1.2,neightbor);  //face detection
 
-			//		if (localObjects.size()==0)
-			//		{
-			//			m_clasFrontal.detectMultiScale(image,objects);
-			//		}
-			//		
-			//		for (int j=0; j<localObjects.size(); j++)
-			//			localObjects[j]=localObjects[j]+(subImRect.tl());
+					if (localObjects.size()==0)
+					{
+						m_clasFrontal.detectMultiScale(image,objects,1.2,neightbor);
+					}
+					
+					for (int j=0; j<localObjects.size(); j++)
+						localObjects[j]=localObjects[j]+(subImRect.tl());
 
-			//		objects.assign(localObjects.begin(), localObjects.end());
+					objects.assign(localObjects.begin(), localObjects.end());
 
-			//	}
-			//}
-			//else
-			//{
-			//	if (image.cols>10)
-					m_clasFrontal.detectMultiScale(image, objects);  //face detection
-			//}
+				}
+			}
+			else
+			{
+				if (image.cols>10)
+					m_clasFrontal.detectMultiScale(image, objects,1.2,neightbor);  //face detection
+			}
 		}
 			
 

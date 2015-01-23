@@ -1062,8 +1062,8 @@ void faceDetector()
 	std::string cascadeProfilePath="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\cascade\\haarcascade_profileface.xml";
 	*/
 	
-	std::string cascadeFrontalPath="C:\\Users\\dev\\Desktop\\faces\\mov\\cascade2000N.xml";
-	std::string cascadeProfilePath="C:\\Users\\dev\\Desktop\\faces\\mov\\cascade2000N.xml";
+	std::string cascadeFrontalPath="C:\\Users\\dev\\Desktop\\faces\\mov\\cascade1354.2250.xml";
+	std::string cascadeProfilePath="C:\\Users\\dev\\Desktop\\faces\\mov\\cascade1354.2250.xml";
 	std::string movieFrontalPath="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\2010-12-15-P02-S01.cpy\\Aleksander Spalek_LB_T01.60981847.avi";
 	std::string movieFrontalPath1="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\2010-12-15-P02-S01.cpy\\Aleksander Spalek_LB_T08.60981847.avi";
 	std::string movieFrontalPath2="F:\\dev\\k.wereszczynski\\cvl\\data\\user\\dataMan\\2011-03-04-B0005-S02\\2011-03-04-B0005-S02-T07.60981847.avi";
