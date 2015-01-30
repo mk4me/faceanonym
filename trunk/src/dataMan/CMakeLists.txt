@@ -24,6 +24,7 @@ set(SOURCES
 	moc_qtanonimizationform.cpp
 	createTrainingSet.cpp
 	imageList.cpp
+	imageViewer.cpp
 )
  
 set(HEADERS
@@ -36,6 +37,7 @@ set(HEADERS
 	ui_qtanonimizationform.h
 	createTrainingSet.h
 	imageList.h
+	imageViewer.h
 )
  
 source_group("Source Files" FILES ${SOURCES})
