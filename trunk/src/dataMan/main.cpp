@@ -15,6 +15,7 @@
 #include <time.h>
 #include "createTrainingSet.h"
 #include "Anonymization.h"
+#include "imageViewer.h"
 //#include "boost/archive/binary_oarchive.hpp"
 //#include "boost/archive/binary_iarchive.hpp"
 
@@ -2152,7 +2153,7 @@ int main( int argc, const char** argv )
 		//coloredText("Mowisz - masz Dawid! Chciales kolorowane - masz kolorowane!\n");
 
 		coloredText("What do you want to do today? ;-)\nWell, maybe I'll ask what do you HAVE TO do today?\n\n\n");
-		coloredText("1- folder organize\n2- video processing\n3-extras\n4-crop from start to end\n0- exit\n> ");
+		coloredText("1- folder organize\n2- video processing\n3-extras\n4-crop from start to end\n5-ImgViewer\n0- exit\n> ");
 		set_color(3);
 		int i;
 		cin>>i;
@@ -2200,6 +2201,11 @@ int main( int argc, const char** argv )
 		//	ymcC.YMLtoDAT();
 
 			faceDetector();
+			break;
+				}
+		case 5: {
+			ImgViewer::CImgViewer imgView("C:\\test.avi");
+			imgView.GetFrames();
 			break;
 				}
 	default: {
