@@ -25,6 +25,9 @@ set(SOURCES
 	createTrainingSet.cpp
 	imageList.cpp
 	imageViewer.cpp
+	VideoSequence.cpp
+	AnonimizedSequence.cpp
+	OpticalFlow.cpp
 )
  
 set(HEADERS
@@ -38,6 +41,9 @@ set(HEADERS
 	createTrainingSet.h
 	imageList.h
 	imageViewer.h
+	VideoSequence.h
+	AnonimizedSequence.h
+	OpticalFlow.h
 )
  
 source_group("Source Files" FILES ${SOURCES})

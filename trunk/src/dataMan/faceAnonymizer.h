@@ -35,7 +35,7 @@ public:
 	\version	1.0
 	\date		13.01.2011
 */
-class CFaceDetector: public Thread
+class CFaceDetector: public OpenThreads::Thread
 {
 public:
 	/*	\brief	Creates new instance of CFaceDetector loading and creating frontal and profile cascade classifier
@@ -59,6 +59,8 @@ public:
 	*/
 	void storeNewImage(const cv::Mat& image);
 
+	void operator () (const cv::Mat& image);
+
 	/*	\brief		Method retrieving counted rectangle hiding face
 		\attention	Remember that not all images will be recognized. After ending the actual detect process the new one on last stored image is started. This method overrides existing image, 
 		so all images stored during persisting process will be not recognized. 
@@ -66,11 +68,13 @@ public:
 	*/
 	std::vector<cv::Rect> getArea();
 
-private:
+	std::vector<cv::Rect> operator() ();
+
+protected:
 
 	CFaceDetector();						//!< object without classifiers should not be created!
 
-	Mutex m_mutex;							//!< mutex for locking
+	OpenThreads::Mutex m_mutex;							//!< mutex for locking
 	cv::Mat m_image;						//!< image where face is beeing detected
 	cv::CascadeClassifier m_clasFrontal;	//!< classifier for frontal face detection
 	cv::CascadeClassifier m_clasProfile;	//!< classifier for profile face detection

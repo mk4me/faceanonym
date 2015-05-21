@@ -16,6 +16,8 @@
 #include "createTrainingSet.h"
 #include "Anonymization.h"
 #include "imageViewer.h"
+#include "VideoSequence.h"
+#include "AnonimizedSequence.h"
 //#include "boost/archive/binary_oarchive.hpp"
 //#include "boost/archive/binary_iarchive.hpp"
 
@@ -2112,6 +2114,41 @@ void removeOriginals(){
 //	}
 //}
 
+void anonimization() {
+
+	std::system("cls");
+	std::cout<<"Welcome to video Anonimization.\n===============================================\n";
+
+	std::cout<<"Enter input folder path:\n> ";
+
+	std::string folderPath=QFileDialog::getExistingDirectory(0, "Pick folder with input data").toStdString();
+	std::cout<<"done.\n";
+
+	fs::recursive_directory_iterator itrEnd;
+	
+	std::string cascadeFrontalPath="E:\\res\\Anionimizacja\\data\\trainingSets\\cascade.xml";
+	std::string cascadeProfilePath="E:\\res\\Anionimizacja\\data\\trainingSets\\cascade.xml";
+	/*std::string cascadeFrontalPath="cascade1500.xml";
+	std::string cascadeProfilePath="cascade1500.xml";*/
+	for (fs::recursive_directory_iterator fit(folderPath);
+		fit != itrEnd;
+		++fit)
+	{
+		if (fit->path().extension().string()==".avi" || fit->path().extension().string()==".AVI"){
+			if (fit->path().extension().string()==".avi" || fit->path().extension().string()==".AVI"){
+				std::cout<<"reading sequence: \n";
+				CFaceDetector fd(cascadeFrontalPath, cascadeProfilePath);
+				Anonimizator::AnonimizedSequenceDefaultType asq(fit->path().string(), &fd);
+				std::cout<<"anonimizating: \n";
+				asq();
+			}
+		}
+	}
+
+	cout<<"done.\n";
+	
+};
+
 int main( int argc, const char** argv )
 {
 // 	detectorAnalysis ("F:\\ds\\polnor", "results", 30, 30);
@@ -2204,8 +2241,17 @@ int main( int argc, const char** argv )
 			break;
 				}
 		case 5: {
-			ImgViewer::CImgViewer imgView("C:\\test.avi");
-			imgView.GetFrames();
+			/*ImgViewer::CImgViewer imgView("E:\\res\\Anionimizacja\\data\\test.avi");
+			imgView.GetFrames();*/
+			/*Anonimizator::VideoSequenceTypeCV videoSequence("E:\\res\\Anionimizacja\\data\\test.avi");
+			videoSequence.read();
+			for (int i=0; i<videoSequence.size(); ++i){
+			cv::imshow("test", videoSequence[i]);
+			cv::waitKey(40);
+			}*/
+
+			anonimization();
+
 			break;
 				}
 	default: {

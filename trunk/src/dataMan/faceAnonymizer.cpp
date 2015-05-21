@@ -46,8 +46,10 @@ void CFaceDetector::run()
 		//cv::Mat imageToDraw=image;
 		
 		std::vector <cv::Rect> objects;
-		int neightbor = 12;
-
+		int neightbor = 3;
+		double scaleFactorD=2.0F;
+		std::cout<<"o";
+		bool isMade=false;
 		if (isStor == true & isGot == false)
 		{
 			if (areas.size()>0)
@@ -68,12 +70,17 @@ void CFaceDetector::run()
 					if (subImRect.br().y>image.rows) subImRect.height=image.rows-1-subImRect.y;
 
 					cv::Mat areaImage=image(subImRect);
-					if (areaImage.cols>10)
-						m_clasFrontal.detectMultiScale(areaImage, localObjects,1.2,neightbor);  //face detection
+					if (areaImage.cols>10){
+						std::cout<<"*";
+						m_clasProfile.detectMultiScale(areaImage, localObjects,scaleFactorD,neightbor);  //face detection
+						std::cout<<"#";
+					}
 
 					if (localObjects.size()==0)
 					{
-						m_clasFrontal.detectMultiScale(image,objects,1.2,neightbor);
+						std::cout<<"=";
+						m_clasProfile.detectMultiScale(image,objects,scaleFactorD,neightbor);
+						std::cout<<"|";
 					}
 					
 					for (int j=0; j<localObjects.size(); j++)
@@ -82,28 +89,38 @@ void CFaceDetector::run()
 					objects.assign(localObjects.begin(), localObjects.end());
 
 				}
+
+				isMade=true;
 			}
 			else
 			{
-				if (image.cols>10)
-					m_clasFrontal.detectMultiScale(image, objects,1.2,neightbor);  //face detection
+				if (image.cols>10){
+					std::cout<<"+";
+					m_clasProfile.detectMultiScale(image, objects,scaleFactorD,neightbor);  //face detection
+					//std::cout<<"<FD="<<objects.size()<<">";
+					std::cout<<"]";
+					isMade=true;
+				}
 			}
 		}
 			
 
-		if (objects.size()>0)
+		if (isMade)
 		{
 			//detected faces stored in m_detectedArea in critical section due to possibility of read this variable by other thread.
 			//CS
+			std::cout<<"@";
 			m_mutex.lock();
+			//std::cout<<"<CS:"<<objects.size()<<">";
 			m_detectedArea=objects;
 			m_got = true;
 			m_stored = false;
 			m_mutex.unlock();
+			std::cout<<"!";
 			//eof CS
 		}
-		//std::cout<<"R";
-		//cv::waitKey(40);
+		std::cout<<"x";
+		Sleep(400);
 	}
 
 }
@@ -112,24 +129,26 @@ void CFaceDetector::run()
 void CFaceDetector::storeNewImage( const cv::Mat& image )
 {
 
-	bool canStor = true;
+	bool stored= false;
 
-	while (canStor)
+	while (!stored)
 	{
 		m_mutex.lock();
-		canStor = m_stored;
-		if (!canStor)
+		
+		stored = m_stored;
+		std::cout<<"<";
+		//std::cout<<"<SI="<<stored<<"";
+		if (!stored)
 		{
 			m_image=cv::Mat(image);
+			m_stored=true;
+			std::cout<<",";
 		}
+		std::cout<<">";
 		m_mutex.unlock();
 
-		cv::waitKey(10);
+		//Sleep(40);
 	}
-
-	m_mutex.lock();
-	m_stored = true;
-	m_mutex.unlock();
 
 	////critical section used because of possibility of m_image retrieving in method run.
 	//m_count++;
@@ -154,10 +173,11 @@ std::vector<cv::Rect> CFaceDetector::getArea() //not const because of mutex usag
 
 	bool canGot = false;
 	std::vector<cv::Rect> rv;
-	
+	//std::cout<<"<GA>";
 
 	while(!canGot)
 	{
+		std::cout<<".";
 		m_mutex.lock();
 		canGot = m_got;
 		
@@ -166,17 +186,29 @@ std::vector<cv::Rect> CFaceDetector::getArea() //not const because of mutex usag
 			rv = m_detectedArea;
 		}
 		m_mutex.unlock();
-
-		cv::waitKey(10);
-
+		if (!canGot){
+			std::cout<<"-";
+			Sleep(1000);
+		}
+		//std::cout<<"</GAMOD>";
 	}
-
+	//std::cout<<"<GAEND> ";
 	m_mutex.lock();
 	m_got = false;
 	m_mutex.unlock();
-
+	//std::cout<<"</GAEND> ";
 
 	return rv;
+}
+
+void CFaceDetector::operator()(const cv::Mat& image)
+{
+	storeNewImage(image);
+}
+
+std::vector<cv::Rect> CFaceDetector::operator()()
+{
+	return getArea();
 }
 
 CFaceAnonymizer::CFaceAnonymizer( const std::string& videoName, const std::string& frontalClassifier, const std::string& profileClassifier, IFaceShield* shield/*=NULL*/ ): m_capture(videoName),
